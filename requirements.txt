@@ -1,6 +1,8 @@
 fastapi
 uvicorn
+faiss-cpu
 openai
-pinecone-client
+pydantic
 langchain
+langchain-community
 langchain-openai
