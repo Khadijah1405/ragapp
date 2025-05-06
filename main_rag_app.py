@@ -1,6 +1,4 @@
 import os
-import zipfile
-import requests
 import faiss
 import pickle
 import numpy as np
@@ -22,7 +20,7 @@ os.environ["OPENAI_API_KEY"] = api_key
 
 logging.basicConfig(level=logging.INFO)
 
-app = FastAPI(title="evergabe.de RAG Multi-Source", description="Query endpoints for separate FAISS indexes.")
+qa_chain = None  # global holder
 
 class QueryModel(BaseModel):
     query: str
@@ -68,58 +66,22 @@ def load_index(source_folder):
     llm = ChatOpenAI(model_name="gpt-4", temperature=0)
     return RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever)
 
-# Setup on startup
-data_sources = {
-    "source_1": "vectorstore/faiss_index_m",
-    "source_2": "vectorstore/faiss_index_m1",
-    "source_3": "vectorstore/youtubevectors"
-}
-qa_chains = {}
+def create_app(source_folder: str, source_key: str):
+    app = FastAPI(title=f"evergabe.de RAG API – {source_key}")
 
-@app.on_event("startup")
-def setup_all():
-    os.makedirs("vectorstore", exist_ok=True)
-    zip_path = "vectorstore/vectors.zip"
-    url = "https://sdvvg-my.sharepoint.com/:u:/g/personal/khadijah-ali_shah_evergabe_de/EdZ2vqUtutJNndmfh-HrTQYBanvuhXBTLQUn3c_pFgN2gA?download=1"
+    @app.on_event("startup")
+    def startup():
+        global qa_chain
+        logging.info(f"Loading index for {source_key}...")
+        qa_chain = load_index(source_folder)
+        logging.info(f"✅ Ready: {source_key}")
 
-    print("⬇️ Downloading ZIP...")
-    r = requests.get(url)
-    with open(zip_path, "wb") as f:
-        f.write(r.content)
-    print("📦 Extracting...")
-    with zipfile.ZipFile(zip_path, "r") as zip_ref:
-        zip_ref.extractall("vectorstore")
-    os.remove(zip_path)
-
-    print("⚙️ Initializing sources...")
-    for key, folder in data_sources.items():
+    @app.post("/query")
+    async def query(request: QueryModel):
         try:
-            qa_chains[key] = load_index(folder)
-            print(f"✅ {key} ready")
+            response = qa_chain.invoke({"query": request.query})
+            return {"source": source_key, "question": request.query, "answer": response["result"]}
         except Exception as e:
-            print(f"❌ Failed to load {key}: {e}")
+            raise HTTPException(status_code=500, detail=str(e))
 
-# Individual endpoints
-@app.post("/query/source_1")
-async def query_source_1(request: QueryModel):
-    try:
-        response = qa_chains["source_1"].invoke({"query": request.query})
-        return {"source": "source_1", "question": request.query, "answer": response["result"]}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/query/source_2")
-async def query_source_2(request: QueryModel):
-    try:
-        response = qa_chains["source_2"].invoke({"query": request.query})
-        return {"source": "source_2", "question": request.query, "answer": response["result"]}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@app.post("/query/source_3")
-async def query_source_3(request: QueryModel):
-    try:
-        response = qa_chains["source_3"].invoke({"query": request.query})
-        return {"source": "source_3", "question": request.query, "answer": response["result"]}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    return app
