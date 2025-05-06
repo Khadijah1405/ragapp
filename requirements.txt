@@ -1,8 +1,9 @@
 fastapi
 uvicorn
+requests
+numpy
 faiss-cpu
-openai
-pydantic
 langchain
-langchain-community
 langchain-openai
+openai
+
