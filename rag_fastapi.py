@@ -7,8 +7,9 @@ import numpy as np
 import logging
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-from langchain_community.vectorstores import FAISS
+from langchain.embeddings import OpenAIEmbeddings
+from langchain.chat_models import ChatOpenAI
+from langchain.vectorstores import FAISS
 from langchain.schema import Document
 from langchain.chains import RetrievalQA
 from langchain.storage import InMemoryStore
