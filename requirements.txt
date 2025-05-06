@@ -3,7 +3,8 @@ uvicorn
 requests
 numpy
 faiss-cpu
-langchain
-langchain-openai
 openai
+langchain==0.1.14
+langchain-community==0.0.21
+langchain-openai==0.0.7
 
