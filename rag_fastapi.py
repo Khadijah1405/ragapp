@@ -23,7 +23,7 @@ os.environ["OPENAI_API_KEY"] = api_key
 logging.basicConfig(level=logging.INFO)
 
 # Initialize FastAPI app
-app = FastAPI(title="evergabe.de RAG Model", description="API to answer procurement-related queries.")
+app = FastAPI(title=" RAG Model", description="API to answer procurement-related queries.")
 
 # Custom Docstore for LangChain FAISS
 class CustomDocstore(InMemoryStore):
@@ -32,7 +32,7 @@ class CustomDocstore(InMemoryStore):
         return doc[0] if doc else None
 
 # Download and unzip vector files from OneDrive
-VECTORS_URL = "https://sdvvg-my.sharepoint.com/:u:/g/personal/khadijah-ali_shah_evergabe_de/EdZ2vqUtutJNndmfh-HrTQYBanvuhXBTLQUn3c_pFgN2gA?download=1"
+VECTORS_URL = (enter your one drive url)
 VECTOR_PATH = "vectorstore"
 
 @app.on_event("startup")
